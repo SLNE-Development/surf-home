@@ -1,0 +1,4 @@
+name: surf-home
+version: '1.21.11-1.0.0'
+main: dev.slne.surf.home.SurfHome
+api-version: '1.21'
