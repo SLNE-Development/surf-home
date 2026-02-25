@@ -26,5 +26,14 @@ fun CommandAPICommand.homeDeleteCommand() = subcommand("delete") {
         }
 
         HomeService.deleteHome(home!!.id)
+
+        player.sendText {
+            appendSuccessPrefix()
+            success("Das angegebene Zuhause")
+            appendSpace()
+            variableValue(home!!.name)
+            appendSpace()
+            success("wurde gelöscht.")
+        }
     }
 }

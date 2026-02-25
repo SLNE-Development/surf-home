@@ -116,11 +116,12 @@ class HomeServiceImpl : HomeService, Services.Fallback {
         val uuid = player.uniqueId
 
         if (teleportCooldowns.getIfPresent(uuid) != null) {
+            val minutes = TELEPORT_COOLDOWN.inWholeMinutes
             player.sendText {
                 appendErrorPrefix()
                 error("Du kannst dich nur alle")
                 appendSpace()
-                variableValue("$TELEPORT_COOLDOWN Minuten")
+                variableValue("$minutes Minuten")
                 appendSpace()
                 error("teleportieren.")
             }

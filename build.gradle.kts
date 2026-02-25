@@ -1,5 +1,3 @@
-import sun.jvmstat.monitor.MonitoredVmUtil.mainClass
-
 plugins {
     id("dev.slne.surf.surfapi.gradle.paper-plugin") version "1.21.11+"
 }
