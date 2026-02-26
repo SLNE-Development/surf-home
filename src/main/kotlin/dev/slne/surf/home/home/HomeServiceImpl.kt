@@ -4,7 +4,11 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import com.github.shynixn.mccoroutine.folia.launch
 import com.google.auto.service.AutoService
+import dev.slne.surf.home.config.homes.HomeConfigHolder
+import dev.slne.surf.home.config.homes.homeConfig
+import dev.slne.surf.home.config.settings.settingsConfig
 import dev.slne.surf.home.plugin
+import dev.slne.surf.home.util.userContent
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.messages.adventure.playSound
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
@@ -18,16 +22,11 @@ import org.bukkit.Location
 import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 import net.kyori.adventure.sound.Sound as AdventureSound
 import org.bukkit.Sound as BukkitSound
-
-const val MAX_HOMES_PER_PLAYER = 3
-val TELEPORT_COOLDOWN = 5.minutes
-val HOME_CREATION_COOLDOWN = 5.minutes
-val WAIT_TIME = 5.seconds
 
 sealed class HomeCreateResult {
     data class Success(val home: Home) : HomeCreateResult()
@@ -42,15 +41,15 @@ class HomeServiceImpl : HomeService, Services.Fallback {
     override val homes get() = ObjectArrayList(homesMap.values).freeze()
 
     private val lastCreations = Caffeine.newBuilder()
-        .expireAfterWrite(HOME_CREATION_COOLDOWN.toJavaDuration())
+        .expireAfterWrite(settingsConfig.creationCooldownSeconds.seconds.toJavaDuration())
         .build<UUID, Unit>()
 
     private val teleportCooldowns = Caffeine.newBuilder()
-        .expireAfterWrite(TELEPORT_COOLDOWN.toJavaDuration())
+        .expireAfterWrite(settingsConfig.teleportCooldownSeconds.seconds.toJavaDuration())
         .build<UUID, Unit>()
 
     private val executions = Caffeine.newBuilder()
-        .expireAfterWrite(WAIT_TIME.toJavaDuration())
+        .expireAfterWrite(settingsConfig.waitTimeSeconds.seconds.toJavaDuration())
         .removalListener<UUID, Job> { uuid, job, cause ->
             job?.cancel()
         }
@@ -61,7 +60,8 @@ class HomeServiceImpl : HomeService, Services.Fallback {
 
     override fun registerHomes() {
         homesMap.clear()
-        HomeConfig.getConfig().homes.forEach { home ->
+
+        homeConfig.homes.forEach { home ->
             homesMap[home.id] = home
         }
     }
@@ -69,19 +69,19 @@ class HomeServiceImpl : HomeService, Services.Fallback {
     override fun registerHome(home: Home) {
         homesMap[home.id] = home
 
-        HomeConfig.getConfig().apply {
+        homeConfig.apply {
             homes.add(home)
         }
-        HomeConfig.save()
+        HomeConfigHolder.save()
     }
 
     override fun unregisterHome(home: Home) {
         homesMap.remove(home.id)
 
-        HomeConfig.getConfig().apply {
+        homeConfig.apply {
             homes.remove(home)
         }
-        HomeConfig.save()
+        HomeConfigHolder.save()
     }
 
     override fun createHome(ownerId: UUID, name: String, location: Location): HomeCreateResult {
@@ -90,7 +90,7 @@ class HomeServiceImpl : HomeService, Services.Fallback {
         }
 
         val existingHomes = getHomesOf(ownerId)
-        if (existingHomes.size >= MAX_HOMES_PER_PLAYER) {
+        if (existingHomes.size >= settingsConfig.maxHomesPerPlayer) {
             return HomeCreateResult.LimitReached
         }
 
@@ -116,12 +116,12 @@ class HomeServiceImpl : HomeService, Services.Fallback {
         val uuid = player.uniqueId
 
         if (teleportCooldowns.getIfPresent(uuid) != null) {
-            val minutes = TELEPORT_COOLDOWN.inWholeMinutes
+            val minutes = settingsConfig.teleportCooldownSeconds.seconds.inWholeMinutes
             player.sendText {
                 appendErrorPrefix()
                 error("Du kannst dich nur alle")
                 appendSpace()
-                variableValue("$minutes Minuten")
+                variableValue(settingsConfig.teleportCooldownSeconds.seconds.userContent())
                 appendSpace()
                 error("teleportieren.")
             }
@@ -132,13 +132,13 @@ class HomeServiceImpl : HomeService, Services.Fallback {
             appendSuccessPrefix()
             success("Du wirst in")
             appendSpace()
-            variableValue("$WAIT_TIME Sekunden")
+            variableValue(settingsConfig.waitTimeSeconds.seconds.userContent())
             appendSpace()
             success("zu")
             appendSpace()
             variableValue(home.name)
             appendSpace()
-            success("zteleportiert")
+            success("teleportiert")
 
             appendNewSuccessPrefixedLine()
             success("Bitte bewege dich nicht!")
@@ -150,8 +150,8 @@ class HomeServiceImpl : HomeService, Services.Fallback {
             player.location.clone()
         }
 
-        val job = plugin.launch {
-            for (secondsLeft in WAIT_TIME.inWholeSeconds downTo 0) {
+        val job = plugin.launch(plugin.entityDispatcher(player)) {
+            for (secondsLeft in settingsConfig.waitTimeSeconds.seconds.inWholeSeconds downTo 0) {
                 if (player.location.distanceSquared(startLocation) > 0.1) {
                     player.sendText {
                         appendErrorPrefix()
@@ -161,29 +161,26 @@ class HomeServiceImpl : HomeService, Services.Fallback {
                         appendSpace()
                         error("wurde abgebrochen, da du dich bewegt hast!")
                     }
+                    player.playFailSound()
                     executions.invalidate(uuid)
                     return@launch
                 }
 
-                if (secondsLeft > 0) {
-                    player.sendRemainingTimeActionBar(home.name, secondsLeft)
-                    player.playTeleportSound(false)
-                    delay(1.seconds)
-                }
+                player.sendRemainingTimeActionBar(home.name, secondsLeft.seconds)
+                player.playTeleportSound(false)
+                delay(1.seconds)
             }
 
-            withContext(plugin.entityDispatcher(player)) {
-                player.teleportAsync(home.location).thenAccept {
-                    teleportCooldowns.put(uuid, Unit)
-                    player.playTeleportSound(true)
-                    player.sendText {
-                        appendSuccessPrefix()
-                        success("Du wurdest zu")
-                        appendSpace()
-                        variableValue(home.name)
-                        appendSpace()
-                        success("teleportiert.")
-                    }
+            player.teleportAsync(home.location).thenAccept {
+                teleportCooldowns.put(uuid, Unit)
+                player.playTeleportSound(true)
+                player.sendText {
+                    appendSuccessPrefix()
+                    success("Du wurdest zum Home")
+                    appendSpace()
+                    variableValue(home.name)
+                    appendSpace()
+                    success("teleportiert.")
                 }
             }
             executions.invalidate(uuid)
@@ -192,37 +189,39 @@ class HomeServiceImpl : HomeService, Services.Fallback {
         executions.put(uuid, job)
     }
 
-    private fun Player.sendRemainingTimeActionBar(homeName: String, seconds: Long) {
-        val content = if (seconds > 0) {
+    private fun Player.sendRemainingTimeActionBar(homeName: String, timeLeft: Duration) {
+        val content =
             buildText {
-                success("Teleport zu")
+                primary(">")
                 appendSpace()
                 variableValue(homeName)
+
+                if (timeLeft > Duration.ZERO) {
+                    appendSpace()
+                    spacer("|")
+                    appendSpace()
+                    variableValue(timeLeft.userContent())
+                }
+
                 appendSpace()
-                success("in")
-                appendSpace()
-                variableValue("$seconds Sekunden")
-                success("...")
+                primary("<")
+
             }
-        } else {
-            buildText {
-                success("Du wirst zu")
-                appendSpace()
-                variableValue(homeName)
-                appendSpace()
-                success("teleportiert ...")
-            }
-        }
         sendActionBar(content)
     }
 
-    private fun Player.playTeleportSound(completed: Boolean) = playSound(true) {
-        if (completed) {
+    private fun Player.playTeleportSound(teleport: Boolean) = playSound(true) {
+        if (teleport) {
             type(BukkitSound.ENTITY_ENDERMAN_TELEPORT)
         } else {
             type(BukkitSound.BLOCK_NOTE_BLOCK_PLING)
         }
+        volume(.5f)
+        source(AdventureSound.Source.PLAYER)
+    }
 
+    private fun Player.playFailSound() = playSound(true) {
+        type(BukkitSound.BLOCK_ANVIL_DESTROY)
         volume(.5f)
         source(AdventureSound.Source.PLAYER)
     }
@@ -245,6 +244,6 @@ class HomeServiceImpl : HomeService, Services.Fallback {
     }
 
     override fun saveHomes() {
-        HomeConfig.save()
+        HomeConfigHolder.save()
     }
 }

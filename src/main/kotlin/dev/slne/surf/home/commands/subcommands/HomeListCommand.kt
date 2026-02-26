@@ -10,16 +10,17 @@ import dev.slne.surf.home.plugin
 import dev.slne.surf.surfapi.core.api.font.toSmallCaps
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
 import dev.slne.surf.surfapi.core.api.messages.adventure.clickCallback
-import dev.slne.surf.surfapi.core.api.messages.adventure.clickRunsCommand
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.messages.pagination.Pagination
 import dev.slne.surf.surfapi.core.api.util.dateTimeFormatter
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.entity.Player
 
-private val pagination = Pagination<Home> {
+private fun pagination(homeCount: Int) = Pagination<Home> {
     title {
-        primary("Deine Zuhauses".toSmallCaps(), TextDecoration.BOLD)
+        primary("Deine Homes".toSmallCaps(), TextDecoration.BOLD)
+        appendSpace()
+        spacer("($homeCount Stück)")
     }
 
     rowRenderer { home, _ ->
@@ -32,13 +33,12 @@ private val pagination = Pagination<Home> {
                 spacer("(${dateTimeFormatter.format(home.createdAt)})")
 
                 hoverEvent(buildText {
-                    success("Klicke, um dich zum Zuhause")
+                    success("Klicke, um dich zum Home")
                     appendSpace()
                     variableValue(home.name)
                     appendSpace()
                     success("zu teleportieren.")
                 })
-                clickRunsCommand("/home teleport ${home.name}")
                 clickCallback {
                     val player = it as? Player ?: return@clickCallback
                     plugin.launch {
@@ -57,14 +57,14 @@ fun CommandAPICommand.homeListCommand() = subcommand("list") {
         if (homes.isEmpty()) {
             player.sendText {
                 appendErrorPrefix()
-                error("Du besitzt kein Zuhause!")
+                error("Du besitzt keine Homes!")
             }
             return@playerExecutor
         }
 
         player.sendText {
             appendNewline()
-            append(pagination.renderComponent(homes))
+            append(pagination(homes.size).renderComponent(homes))
         }
     }
 }

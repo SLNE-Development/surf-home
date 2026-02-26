@@ -20,7 +20,7 @@ fun CommandAPICommand.homeTeleportCommand() = subcommand("teleport") {
         if (home == null) {
             player.sendText {
                 appendErrorPrefix()
-                error("Das angegebene Zuhause konnte nicht gefunden werden!")
+                error("Das angegebene Home konnte nicht gefunden werden!")
             }
             return@playerExecutor
         }

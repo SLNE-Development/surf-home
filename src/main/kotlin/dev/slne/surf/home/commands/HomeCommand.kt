@@ -1,7 +1,8 @@
 package dev.slne.surf.home.commands
 
 import dev.jorel.commandapi.kotlindsl.commandAPICommand
-import dev.jorel.commandapi.kotlindsl.playerExecutor
+import dev.slne.surf.home.commands.subcommands.admin.homeReloadCommand
+import dev.slne.surf.home.commands.subcommands.admin.homeSettingsCommand
 import dev.slne.surf.home.commands.subcommands.homeCreateCommand
 import dev.slne.surf.home.commands.subcommands.homeDeleteCommand
 import dev.slne.surf.home.commands.subcommands.homeListCommand
@@ -15,4 +16,7 @@ fun homeCommand() = commandAPICommand("home") {
     homeDeleteCommand()
     homeListCommand()
     homeTeleportCommand()
+
+    homeReloadCommand()
+    homeSettingsCommand()
 }

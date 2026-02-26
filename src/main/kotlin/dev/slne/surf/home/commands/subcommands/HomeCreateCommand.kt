@@ -4,11 +4,12 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.jorel.commandapi.kotlindsl.stringArgument
 import dev.jorel.commandapi.kotlindsl.subcommand
-import dev.slne.surf.home.home.HOME_CREATION_COOLDOWN
+import dev.slne.surf.home.config.settings.settingsConfig
 import dev.slne.surf.home.home.HomeCreateResult
 import dev.slne.surf.home.home.HomeService
-import dev.slne.surf.home.home.MAX_HOMES_PER_PLAYER
+import dev.slne.surf.home.util.userContent
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
+import kotlin.time.Duration.Companion.seconds
 
 fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
     stringArgument("name")
@@ -16,13 +17,17 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
     playerExecutor { player, arguments ->
         val name = arguments["name"] as String
 
+        if (name.length > 16){
+
+        }
+
         val result = HomeService.createHome(player.uniqueId, name, player.location)
 
         when (result) {
             is HomeCreateResult.Success -> {
                 player.sendText {
                     appendSuccessPrefix()
-                    success("Du hast erfolgreich das Zuhause")
+                    success("Du hast erfolgreich das Home")
                     appendSpace()
                     variableValue(result.home.name)
                     appendSpace()
@@ -35,7 +40,7 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
                     appendErrorPrefix()
                     error("Du hast das maximale Limit von")
                     appendSpace()
-                    variableValue(MAX_HOMES_PER_PLAYER)
+                    variableValue(settingsConfig.maxHomesPerPlayer)
                     appendSpace()
                     error("erreicht!")
                 }
@@ -44,7 +49,7 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
             is HomeCreateResult.NameAlreadyUsed -> {
                 player.sendText {
                     appendErrorPrefix()
-                    error("Du hast bereits ein Zuhause mit dem Namen")
+                    error("Du hast bereits ein Home mit dem Namen")
                     appendSpace()
                     variableValue(result.homeName)
                     appendSpace()
@@ -53,14 +58,13 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
             }
 
             is HomeCreateResult.CooldownActive -> {
-                val minutes = HOME_CREATION_COOLDOWN.inWholeMinutes
                 player.sendText {
                     appendErrorPrefix()
                     error("Du kannst nur alle")
                     appendSpace()
-                    variableValue("$minutes Minuten")
+                    variableValue(settingsConfig.creationCooldownSeconds.seconds.userContent())
                     appendSpace()
-                    error("ein neues Zuhause erstellen!")
+                    error("ein neues Home erstellen!")
                 }
             }
         }

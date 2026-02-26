@@ -20,7 +20,7 @@ fun CommandAPICommand.homeDeleteCommand() = subcommand("delete") {
         if(home == null){
             player.sendText {
                 appendErrorPrefix()
-                error("Das angegebene Zuhause konnte nicht gefunden werden!")
+                error("Das angegebene Home konnte nicht gefunden werden!")
             }
             return@playerExecutor
         }
@@ -29,7 +29,7 @@ fun CommandAPICommand.homeDeleteCommand() = subcommand("delete") {
 
         player.sendText {
             appendSuccessPrefix()
-            success("Das angegebene Zuhause")
+            success("Das angegebene Home")
             appendSpace()
             variableValue(home!!.name)
             appendSpace()
