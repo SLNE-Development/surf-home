@@ -17,10 +17,6 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
     playerExecutor { player, arguments ->
         val name = arguments["name"] as String
 
-        if (name.length > 16){
-
-        }
-
         val result = HomeService.createHome(player.uniqueId, name, player.location)
 
         when (result) {
