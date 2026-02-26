@@ -23,7 +23,7 @@ fun home(
     z = location.z,
     yaw = location.yaw,
     pitch = location.pitch,
-    createdAt = OffsetDateTime.now()
+    createdAtRaw = OffsetDateTime.now().toString()
 )
 
 @ConfigSerializable
@@ -40,7 +40,8 @@ data class Home(
     var yaw: Float,
     var pitch: Float,
 
-    val createdAt: OffsetDateTime
+    @Setting("createdAt")
+    var createdAtRaw: String
 ) {
     @Transient
     var location: Location
@@ -57,6 +58,9 @@ data class Home(
             yaw = value.yaw
             pitch = value.pitch
         }
+
+    @Transient
+    val createdAt: OffsetDateTime get() = OffsetDateTime.parse(createdAtRaw)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
