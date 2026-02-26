@@ -140,7 +140,7 @@ class HomeServiceImpl : HomeService, Services.Fallback {
             success("teleportiert")
 
             appendNewSuccessPrefixedLine()
-            success("Bitte bewege dich nicht!")
+            success("Bitte bewege dich nicht und erhalte keinen Schaden!")
         }
 
         executions.invalidate(uuid)
