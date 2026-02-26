@@ -9,12 +9,12 @@ data class HomesSettingsConfig(
     val maxHomesPerPlayer: Int = 3,
 
     @Setting("teleport-wait-time-seconds")
-    val teleportCooldownSeconds: Int = 5,
+    val teleportCooldownSeconds: Int = 120,
 
     @Setting("teleport-delay-seconds")
     val waitTimeSeconds: Int = 5,
 
     @Setting("creation-delay-seconds")
-    val creationCooldownSeconds: Int = 5
+    val creationCooldownSeconds: Int = 300
 
 )

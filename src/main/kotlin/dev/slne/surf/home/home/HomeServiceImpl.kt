@@ -32,6 +32,7 @@ sealed class HomeCreateResult {
     data class Success(val home: Home) : HomeCreateResult()
     object LimitReached : HomeCreateResult()
     data class NameAlreadyUsed(val homeName: String) : HomeCreateResult()
+    data class NameTooLarge(val homeName: String) : HomeCreateResult()
     object CooldownActive : HomeCreateResult()
 }
 
@@ -96,6 +97,10 @@ class HomeServiceImpl : HomeService, Services.Fallback {
 
         if (existingHomes.any { it.name.equals(name, ignoreCase = true) }) {
             return HomeCreateResult.NameAlreadyUsed(name)
+        }
+
+        if(name.length > 16){
+            return HomeCreateResult.NameTooLarge(name)
         }
 
         val id = generateUnusedId()

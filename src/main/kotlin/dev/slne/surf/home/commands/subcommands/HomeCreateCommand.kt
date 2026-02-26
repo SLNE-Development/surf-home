@@ -57,6 +57,17 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
                 }
             }
 
+            is HomeCreateResult.NameTooLarge -> {
+                player.sendText {
+                    appendErrorPrefix()
+                    error("Der angegebene Name")
+                    appendSpace()
+                    variableValue(result.homeName)
+                    appendSpace()
+                    error("überschreitet die gesamtlänge von 16 Zeichen!")
+                }
+            }
+
             is HomeCreateResult.CooldownActive -> {
                 player.sendText {
                     appendErrorPrefix()

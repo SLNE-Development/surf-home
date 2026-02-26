@@ -20,7 +20,7 @@ fun CommandAPICommand.homeReloadCommand() = subcommand("reload") {
 
         sender.sendText {
             appendSuccessPrefix()
-            success("Die Config wurde aktualisiert!")
+            success("Die existierenden Homes sowie Einstellungen wurde aktualisiert!")
 
             appendNewSuccessPrefixedLine()
             success("Es wurden")
