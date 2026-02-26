@@ -20,7 +20,8 @@ fun CommandAPICommand.homeSettingsCommand() = subcommand("settings") {
         sender.sendText {
             appendSuccessPrefix()
             success("Aktuelle Home-Einstellungen:")
-            appendNewline()
+
+            appendNewSuccessPrefixedLine()
 
             appendNewSuccessPrefixedLine()
             spacer("Max. Homes pro Spieler:")

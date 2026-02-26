@@ -116,7 +116,6 @@ class HomeServiceImpl : HomeService, Services.Fallback {
         val uuid = player.uniqueId
 
         if (teleportCooldowns.getIfPresent(uuid) != null) {
-            val minutes = settingsConfig.teleportCooldownSeconds.seconds.inWholeMinutes
             player.sendText {
                 appendErrorPrefix()
                 error("Du kannst dich nur alle")
@@ -149,6 +148,9 @@ class HomeServiceImpl : HomeService, Services.Fallback {
         val startLocation = withContext(plugin.entityDispatcher(player)) {
             player.location.clone()
         }
+        val startHealth = withContext(plugin.entityDispatcher(player)) {
+            player.health
+        }
 
         val job = plugin.launch(plugin.entityDispatcher(player)) {
             for (secondsLeft in settingsConfig.waitTimeSeconds.seconds.inWholeSeconds downTo 0) {
@@ -160,6 +162,19 @@ class HomeServiceImpl : HomeService, Services.Fallback {
                         variableValue(home.name)
                         appendSpace()
                         error("wurde abgebrochen, da du dich bewegt hast!")
+                    }
+                    player.playFailSound()
+                    executions.invalidate(uuid)
+                    return@launch
+                }
+                if (player.health != startHealth) {
+                    player.sendText {
+                        appendErrorPrefix()
+                        error("Die Teleportation zu")
+                        appendSpace()
+                        variableValue(home.name)
+                        appendSpace()
+                        error("wurde abgebrochen, weil du Schaden erhalten hast hast!")
                     }
                     player.playFailSound()
                     executions.invalidate(uuid)
@@ -192,7 +207,7 @@ class HomeServiceImpl : HomeService, Services.Fallback {
     private fun Player.sendRemainingTimeActionBar(homeName: String, timeLeft: Duration) {
         val content =
             buildText {
-                primary(">")
+                primary("»")
                 appendSpace()
                 variableValue(homeName)
 
@@ -204,7 +219,7 @@ class HomeServiceImpl : HomeService, Services.Fallback {
                 }
 
                 appendSpace()
-                primary("<")
+                primary("«")
 
             }
         sendActionBar(content)

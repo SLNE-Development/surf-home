@@ -11,9 +11,10 @@ data class HomesSettingsConfig(
     @Setting("teleport-wait-time-seconds")
     val teleportCooldownSeconds: Int = 5,
 
-    @Setting("creation-delay-seconds")
-    val creationCooldownSeconds: Int = 5,
-
     @Setting("teleport-delay-seconds")
-    val waitTimeSeconds: Int = 5
+    val waitTimeSeconds: Int = 5,
+
+    @Setting("creation-delay-seconds")
+    val creationCooldownSeconds: Int = 5
+
 )

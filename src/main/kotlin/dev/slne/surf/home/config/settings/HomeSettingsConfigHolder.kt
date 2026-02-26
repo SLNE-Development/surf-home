@@ -9,7 +9,7 @@ object HomeSettingsConfigHolder {
     private val manager: SpongeConfigManager<HomesSettingsConfig>
 
     init {
-        surfConfigApi.createSpongeYmlConfig<HomesSettingsConfig>(plugin.dataPath, "config.yml")
+        surfConfigApi.createSpongeYmlConfig<HomesSettingsConfig>(plugin.dataPath, "settings.yml")
         manager = surfConfigApi.getSpongeConfigManagerForConfig(HomesSettingsConfig::class.java)
     }
 
