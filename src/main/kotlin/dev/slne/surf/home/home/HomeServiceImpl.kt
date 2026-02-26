@@ -155,7 +155,7 @@ class HomeServiceImpl : HomeService, Services.Fallback {
                 if (player.location.distanceSquared(startLocation) > 0.1) {
                     player.sendText {
                         appendErrorPrefix()
-                        error("Die Teleportation")
+                        error("Die Teleportation zu")
                         appendSpace()
                         variableValue(home.name)
                         appendSpace()

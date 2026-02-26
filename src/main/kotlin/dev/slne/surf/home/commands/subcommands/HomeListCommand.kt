@@ -1,17 +1,21 @@
 package dev.slne.surf.home.commands.subcommands
 
+import com.github.shynixn.mccoroutine.folia.launch
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
 import dev.slne.surf.home.home.Home
 import dev.slne.surf.home.home.HomeService
+import dev.slne.surf.home.plugin
 import dev.slne.surf.surfapi.core.api.font.toSmallCaps
 import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
+import dev.slne.surf.surfapi.core.api.messages.adventure.clickCallback
 import dev.slne.surf.surfapi.core.api.messages.adventure.clickRunsCommand
 import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
 import dev.slne.surf.surfapi.core.api.messages.pagination.Pagination
 import dev.slne.surf.surfapi.core.api.util.dateTimeFormatter
 import net.kyori.adventure.text.format.TextDecoration
+import org.bukkit.entity.Player
 
 private val pagination = Pagination<Home> {
     title {
@@ -34,7 +38,13 @@ private val pagination = Pagination<Home> {
                     appendSpace()
                     success("zu teleportieren.")
                 })
-                clickRunsCommand("/homes teleport ${home.name}")
+                clickRunsCommand("/home teleport ${home.name}")
+                clickCallback {
+                    val player = it as? Player ?: return@clickCallback
+                    plugin.launch {
+                        HomeService.teleportPlayerToHome(player, home)
+                    }
+                }
             }
         )
     }
