@@ -16,5 +16,4 @@ data class HomesSettingsConfig(
 
     @Setting("creation-delay-seconds")
     val creationCooldownSeconds: Int = 300
-
 )
