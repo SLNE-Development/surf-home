@@ -64,7 +64,7 @@ fun CommandAPICommand.homeCreateCommand() = subcommand("create") {
                     appendSpace()
                     variableValue(result.homeName)
                     appendSpace()
-                    error("überschreitet die gesamtlänge von 16 Zeichen!")
+                    error("überschreitet die Gesamtlänge von 16 Zeichen!")
                 }
             }
 
